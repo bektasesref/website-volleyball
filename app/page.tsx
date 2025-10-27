@@ -1,65 +1,91 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef } from "react";
+import { PlayerSelector } from "@/components/PlayerSelector";
+import { DrawButton } from "@/components/DrawButton";
+import { ResultsDisplay } from "@/components/ResultsDisplay";
+import { ShareButtons } from "@/components/ShareButtons";
 
 export default function Home() {
+  const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
+  const [winners, setWinners] = useState<number[]>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const handleDraw = () => {
+    if (selectedPlayers.length < 12) return;
+
+    setIsDrawing(true);
+    
+    // Shuffle array function
+    const shuffleArray = (array: number[]) => {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    };
+
+    // Simulate drawing animation
+    setTimeout(() => {
+      const shuffled = shuffleArray(selectedPlayers);
+      const selected = shuffled.slice(0, 12);
+      setWinners(selected);
+      setIsDrawing(false);
+    }, 2000);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-linear-to-br from-blue-500 via-blue-400 to-orange-400 p-4 md:p-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-4xl font-bold text-white drop-shadow-lg md:text-5xl">
+            🏐 Online Turnuva Kura
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-xl text-white/90">
+            12 kişilik takım için kura çekimi
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="mb-8">
+          <PlayerSelector
+            selectedPlayers={selectedPlayers}
+            onSelectionChange={setSelectedPlayers}
+          />
         </div>
-      </main>
+
+        <div className="mb-8 text-center">
+          <DrawButton
+            onClick={handleDraw}
+            disabled={selectedPlayers.length < 12}
+            isDrawing={isDrawing}
+          />
+          {selectedPlayers.length < 12 && (
+            <p className="mt-4 text-sm text-white/80">
+              En az 12 oyuncu seçmelisiniz. Şu anda seçilen: {selectedPlayers.length}
+            </p>
+          )}
+        </div>
+
+        {isDrawing && (
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center gap-2 rounded-lg bg-white/20 px-6 py-4 backdrop-blur-sm">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+              <span className="text-lg font-semibold text-white">
+                Kura çekiliyor... Gerilim zirvede!
+              </span>
+            </div>
+          </div>
+        )}
+
+        <div ref={resultsRef}>
+          <ResultsDisplay winners={winners} isDrawing={isDrawing} />
+          {winners.length > 0 && (
+            <ShareButtons winners={winners} resultsRef={resultsRef} />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
