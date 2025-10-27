@@ -11,7 +11,7 @@ export const ALL_PLAYERS = [
   { id: 10, name: "Esma" },
   { id: 11, name: "Eşref" },
   { id: 12, name: "Fırat" },
-  { id: 13, name: "Fırkan" },
+  { id: 13, name: "Furkan" },
   { id: 14, name: "Gürkan" },
   { id: 15, name: "Hüseyin" },
   { id: 16, name: "Mebdebana" },
