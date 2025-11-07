@@ -5,11 +5,13 @@ import { clsx } from "clsx";
 import { ALL_PLAYERS } from "@/constants/players";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchParticipation, submitParticipation } from "@/services/participation";
+import { fetchMatchDay } from "@/services/matchDay";
 import { ApiError } from "@/lib/http/apiError";
 import type {
   GetParticipationResponse,
   ParticipationStatusOption,
 } from "@/types/participation";
+import type { DayOfWeek, GetMatchDayResponse } from "@/types/match-day";
 import type { PlayerRef } from "@/types/player";
 
 type StatusMessage = {
@@ -26,6 +28,16 @@ const STATUS_OPTIONS: Array<{
   { value: "no", label: "Katılamıyorum", description: "Bu hafta gelemeyeceğim" },
 ];
 
+const DAY_OPTIONS: Array<{ value: DayOfWeek; label: string }> = [
+  { value: "monday", label: "Pazartesi" },
+  { value: "tuesday", label: "Salı" },
+  { value: "wednesday", label: "Çarşamba" },
+  { value: "thursday", label: "Perşembe" },
+  { value: "friday", label: "Cuma" },
+  { value: "saturday", label: "Cumartesi" },
+  { value: "sunday", label: "Pazar" },
+];
+
 export function ParticipationTab() {
   const availablePlayers = useMemo<PlayerRef[]>(
     () => ALL_PLAYERS.map((player) => ({ id: player.id, name: player.name })),
@@ -38,10 +50,12 @@ export function ParticipationTab() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [data, setData] = useState<GetParticipationResponse | null>(null);
+  const [matchDayData, setMatchDayData] = useState<GetMatchDayResponse | null>(null);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     void loadParticipation();
+    void loadMatchDay();
   }, []);
 
   useEffect(() => {
@@ -56,6 +70,10 @@ export function ParticipationTab() {
 
   const aggregates = data?.aggregates;
   const records = data?.records ?? [];
+  const winningDay = matchDayData?.results.winningDay;
+  const winningDayLabel = winningDay
+    ? DAY_OPTIONS.find((option) => option.value === winningDay)?.label ?? ""
+    : null;
 
   async function loadParticipation() {
     try {
@@ -67,6 +85,15 @@ export function ParticipationTab() {
       setStatusMessage({ type: "error", message: (error as Error).message });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadMatchDay() {
+    try {
+      const response = await fetchMatchDay({ limit: 1 });
+      setMatchDayData(response);
+    } catch (error) {
+      // Silently fail, don't show error for match day
     }
   }
 
@@ -117,7 +144,15 @@ export function ParticipationTab() {
       <Card className="border-none bg-white" data-card="participation-form">
         <CardHeader className="pb-4">
           <CardTitle>Haftalık Katılım Anketi</CardTitle>
-          <CardDescription>Bu hafta maçta olup olmayacağınızı belirtin, kura sekmesi otomatik güncellensin.</CardDescription>
+          <CardDescription>
+            {winningDayLabel ? (
+              <>
+                Lider olarak önde giden gün: <span className="font-semibold text-orange-600">{winningDayLabel}</span>. Bu gün için katılım sağlayıp sağlayamayacağınız belirsiz.
+              </>
+            ) : (
+              "Bu hafta maçta olup olmayacağınızı belirtin, kura sekmesi otomatik güncellensin."
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
