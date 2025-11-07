@@ -5,15 +5,22 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ALL_PLAYERS } from "@/constants/players";
+import type { ParticipationStatusOption } from "@/types/participation";
 import { Lock, Unlock } from "lucide-react";
 
 interface PlayerSelectorProps {
   candidateIds: number[];
   lockedIds: number[];
   onChange: (params: { candidateIds: number[]; lockedIds: number[] }) => void;
+  participationStatuses?: Record<number, ParticipationStatusOption>;
 }
 
-export function PlayerSelector({ candidateIds, lockedIds, onChange }: PlayerSelectorProps) {
+export function PlayerSelector({
+  candidateIds,
+  lockedIds,
+  onChange,
+  participationStatuses = {},
+}: PlayerSelectorProps) {
   const allPlayers = useMemo(() => [...ALL_PLAYERS], []);
 
   const lockLimitReached = lockedIds.length >= 12;
@@ -66,16 +73,20 @@ export function PlayerSelector({ candidateIds, lockedIds, onChange }: PlayerSele
             const isCandidate = candidateIds.includes(player.id);
             const isLocked = lockedIds.includes(player.id);
             const lockDisabled = !isLocked && lockLimitReached;
+            const participationStatus = participationStatuses[player.id];
+            const isUnavailable = participationStatus === "no";
+            const cardStateClass = isLocked
+              ? "border-orange-500 bg-orange-100 shadow-sm dark:border-orange-400 dark:bg-orange-900/30"
+              : isCandidate
+                ? "border-blue-400 bg-blue-50 dark:border-blue-500/70 dark:bg-blue-900/20"
+                : "border-gray-300 bg-gray-50 opacity-70 dark:border-gray-700 dark:bg-gray-900";
+            const availabilityClass = isUnavailable
+              ? "border-red-400/80 bg-red-50 ring-1 ring-red-300 dark:border-red-500/70 dark:bg-red-900/20 dark:ring-red-700"
+              : "";
             return (
               <div
                 key={player.id}
-                className={`relative flex flex-col rounded-lg border p-3 transition-all ${
-                  isLocked
-                    ? "border-orange-500 bg-orange-100 shadow-sm dark:border-orange-400 dark:bg-orange-900/30"
-                    : isCandidate
-                      ? "border-blue-400 bg-blue-50 dark:border-blue-500/70 dark:bg-blue-900/20"
-                      : "border-gray-300 bg-gray-50 opacity-70 dark:border-gray-700 dark:bg-gray-900"
-                }`}
+                className={`relative flex flex-col rounded-lg border p-3 transition-all ${cardStateClass} ${availabilityClass}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => handleCandidateToggle(player.id)}
@@ -130,6 +141,11 @@ export function PlayerSelector({ candidateIds, lockedIds, onChange }: PlayerSele
                   </span>
                 ) : (
                   <span className="mt-2 text-[11px] uppercase tracking-wide text-gray-400">Hariç</span>
+                )}
+                {isUnavailable && (
+                  <span className="mt-2 rounded-full bg-red-500/20 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-red-700 dark:bg-red-900/40 dark:text-red-200">
+                    Bu hafta yok
+                  </span>
                 )}
               </div>
             );
