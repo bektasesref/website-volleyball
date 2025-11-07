@@ -78,6 +78,20 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
+    const existingBallot = await AllStarBallotModel.findOne({
+      "voter.id": voter.id,
+      cycleKey: resolvedCycleKey,
+    })
+      .lean()
+      .exec();
+
+    if (existingBallot) {
+      return NextResponse.json(
+        { message: "Bu oyuncu zaten bu hafta için bir oy verdi." },
+        { status: 409 }
+      );
+    }
+
     const ballotDoc = await AllStarBallotModel.create({
       voter,
       picks,

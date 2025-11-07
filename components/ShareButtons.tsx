@@ -32,38 +32,6 @@ export function ShareButtons({ winners, lockedPlayers = [], resultsRef }: ShareB
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleShare = () => {
-    if (!resultsRef?.current) return;
-
-    import("html2canvas").then((html2canvas) => {
-      html2canvas.default(resultsRef.current!, {
-        backgroundColor: null,
-        scale: 2,
-      }).then((canvas) => {
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-
-          const file = new File([blob], "kura-sonucu.png", {
-            type: "image/png",
-          });
-
-          if (navigator.share && navigator.canShare({ files: [file] })) {
-            navigator.share({
-              files: [file],
-              title: "Voleybol Kura Sonucu",
-            });
-          } else {
-            canvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.download = "kura-sonucu.png";
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-          }
-        });
-      });
-    });
-  };
-
   const handleWhatsApp = () => {
     const winnersText = winners
       .map((player, index) => {
@@ -117,20 +85,6 @@ export function ShareButtons({ winners, lockedPlayers = [], resultsRef }: ShareB
         >
           <Share2 className="mr-2" />
           WhatsApp
-        </Button>
-      </motion.div>
-
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="flex-1"
-      >
-        <Button
-          onClick={handleShare}
-          className="w-full bg-orange-500 text-white hover:bg-orange-600"
-          disabled={winners.length === 0}
-        >
-          Görsel Paylaş
         </Button>
       </motion.div>
     </div>
