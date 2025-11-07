@@ -181,8 +181,17 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-500 via-blue-400 to-orange-400 p-4 md:p-8">
-      <div className="mx-auto max-w-6xl">
+    <div className="relative min-h-screen overflow-hidden">
+      <div
+        className="absolute inset-0 -z-20 bg-[url('/images/bg.jpeg')] bg-cover bg-center filter blur-xs scale-110"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-500/70 via-blue-400/50 to-orange-400/60"
+        aria-hidden="true"
+      />
+
+      <div className="relative z-10 mx-auto max-w-6xl p-4 md:p-8">
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-bold text-white drop-shadow-lg md:text-5xl">
             🏐 Online Turnuva Kura & All-Star Oylaması
