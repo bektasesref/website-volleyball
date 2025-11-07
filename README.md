@@ -4,7 +4,7 @@
 
 ## Öne Çıkanlar
 
-- 🎲 **Haftalık Kura Akışı**: Oyuncular seçilir, kurayı başlatan kişi modaldan belirlenir ve sonuç MongoDB’ye kaydedilir.
+- 🎲 **Haftalık Kura Akışı**: Kesin katılacak oyuncular kilitlenir, kalan adaylardan kura çekilir; kurayı başlatan kişi modaldan belirlenir ve sonuç MongoDB’ye kaydedilir.
 - 🗂️ **Kura Arşivi**: Header’da son kura özeti, açılır listede geçmiş detayları; ana kadro + yedekler ayrı tutulur.
 - 🗳️ **All-Star Oylaması**: Her oyuncu 12 kişilik kadroya kendisini de dahil ederek gizli oy verebilir; sonuçlar sadece toplu istatistik olarak gösterilir.
 - 🔐 **Gizli Oy Geçmişi**: Toplam oy veren sayısı görülebilir, kimlerin kimi seçtiği sistemde saklı kalır.

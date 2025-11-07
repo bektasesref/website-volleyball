@@ -8,16 +8,20 @@ import type { PlayerRef } from "@/types/player";
 
 interface ShareButtonsProps {
   winners: PlayerRef[];
+  lockedPlayers?: PlayerRef[];
   resultsRef?: { current: HTMLDivElement | null };
 }
 
-export function ShareButtons({ winners, resultsRef }: ShareButtonsProps) {
+export function ShareButtons({ winners, lockedPlayers = [], resultsRef }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+
+  const lockedIds = new Set(lockedPlayers.map((player) => player.id));
 
   const handleCopy = () => {
     const winnersText = winners
       .map((player, index) => {
-        return `${index + 1}. ${player.name}`;
+        const prefix = lockedIds.has(player.id) ? "(Kesin) " : "";
+        return `${index + 1}. ${prefix}${player.name}`;
       })
       .join("\n");
 
@@ -63,7 +67,8 @@ export function ShareButtons({ winners, resultsRef }: ShareButtonsProps) {
   const handleWhatsApp = () => {
     const winnersText = winners
       .map((player, index) => {
-        return `${index + 1}. ${player.name}`;
+        const prefix = lockedIds.has(player.id) ? "(Kesin) " : "";
+        return `${index + 1}. ${prefix}${player.name}`;
       })
       .join("\n");
 

@@ -45,6 +45,15 @@ export async function GET(request: Request) {
   }
 }
 
+function shufflePlayers<T>(players: T[]): T[] {
+  const arr = [...players];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 export async function POST(request: Request) {
   try {
     const json = await request.json();
@@ -57,16 +66,16 @@ export async function POST(request: Request) {
       );
     }
 
-    const { conductorId, primaryPlayerIds, reservePlayerIds, cycleKey } = parseResult.data;
+    const { conductorId, lockedPlayerIds, candidatePlayerIds, cycleKey } = parseResult.data;
 
     let conductor;
-    let primaryPlayers;
-    let reservePlayers;
+    let lockedPlayers;
+    let candidatePlayers;
 
     try {
       conductor = buildPlayerSnapshot(conductorId);
-      primaryPlayers = buildPlayerSnapshots(primaryPlayerIds);
-      reservePlayers = buildPlayerSnapshots(reservePlayerIds ?? []);
+      lockedPlayers = buildPlayerSnapshots(lockedPlayerIds ?? []);
+      candidatePlayers = buildPlayerSnapshots(candidatePlayerIds ?? []);
     } catch (playerError) {
       return NextResponse.json(
         { message: (playerError as Error).message },
@@ -78,8 +87,22 @@ export async function POST(request: Request) {
 
     await connectToDatabase();
 
+    const shuffledCandidates = shufflePlayers(candidatePlayers);
+    const slotsRemaining = Math.max(0, 12 - lockedPlayers.length);
+    if (slotsRemaining > shuffledCandidates.length) {
+      return NextResponse.json(
+        { message: "Kesin katılanlar haricinde yeterli oyuncu bulunmuyor." },
+        { status: 400 }
+      );
+    }
+
+    const selectedFromCandidates = shuffledCandidates.slice(0, slotsRemaining);
+    const primaryPlayers = [...lockedPlayers, ...selectedFromCandidates];
+    const reservePlayers = shuffledCandidates.slice(slotsRemaining);
+
     const drawDoc = await DrawModel.create({
       conductor,
+      lockedPlayers,
       primaryPlayers,
       reservePlayers,
       cycleKey: resolvedCycleKey,

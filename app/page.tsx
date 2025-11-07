@@ -17,14 +17,6 @@ import type { DrawRecord } from "@/types/draw";
 import type { GetAllStarResponse, AllStarResults } from "@/types/all-star";
 import type { PlayerRef } from "@/types/player";
 import { ALL_PLAYERS } from "@/constants/players";
-import { buildPlayerSnapshots } from "@/lib/players";
-
-type PendingDraw = {
-  primaryIds: number[];
-  reserveIds: number[];
-  primaryPlayers: PlayerRef[];
-  reservePlayers: PlayerRef[];
-};
 
 type TabId = "draw" | "allStar";
 
@@ -45,7 +37,8 @@ const EMPTY_ALL_STAR_RESULTS: AllStarResults = {
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabId>("draw");
 
-  const [selectedPlayers, setSelectedPlayers] = useState<number[]>(initialSelection);
+  const [candidatePlayerIds, setCandidatePlayerIds] = useState<number[]>(initialSelection);
+  const [lockedPlayerIds, setLockedPlayerIds] = useState<number[]>([]);
   const [latestDraw, setLatestDraw] = useState<DrawRecord | null>(null);
   const [drawHistory, setDrawHistory] = useState<DrawRecord[]>([]);
   const [drawLoading, setDrawLoading] = useState(true);
@@ -53,7 +46,6 @@ export default function Home() {
   const [isDrawHistoryOpen, setDrawHistoryOpen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [isModalOpen, setModalOpen] = useState(false);
-  const [pendingDraw, setPendingDraw] = useState<PendingDraw | null>(null);
   const [modalConductorId, setModalConductorId] = useState<number | null>(null);
 
   const [allStarData, setAllStarData] = useState<GetAllStarResponse | null>(null);
@@ -83,7 +75,11 @@ export default function Home() {
 
   const winners = latestDraw?.primaryPlayers ?? [];
   const reserves = latestDraw?.reservePlayers ?? [];
-  const selectedCount = selectedPlayers.length;
+  const candidatePoolIds = useMemo(
+    () => candidatePlayerIds.filter((id) => !lockedPlayerIds.includes(id)),
+    [candidatePlayerIds, lockedPlayerIds]
+  );
+  const totalParticipants = lockedPlayerIds.length + candidatePoolIds.length;
   const allStarResults = allStarData?.results ?? EMPTY_ALL_STAR_RESULTS;
   const allStarBallots = allStarData?.ballots ?? [];
 
@@ -115,27 +111,19 @@ export default function Home() {
   }
 
   function handlePrepareDraw() {
-    if (selectedPlayers.length < 12) {
-      setDrawError("En az 12 oyuncu seçmelisiniz.");
+    if (totalParticipants < 12) {
+      setDrawError("Kesin katılacaklar ve aday havuzunun toplamı en az 12 olmalı.");
       return;
     }
 
     setDrawError(null);
 
-    const shuffled = shuffle([...selectedPlayers]);
-    const primaryIds = shuffled.slice(0, 12);
-    const reserveIds = shuffled.slice(12);
-
-    const primaryPlayers = buildPlayerSnapshots(primaryIds);
-    const reservePlayers = buildPlayerSnapshots(reserveIds);
-
-    setPendingDraw({ primaryIds, reserveIds, primaryPlayers, reservePlayers });
     setModalConductorId(latestDraw?.conductor.id ?? availablePlayers[0]?.id ?? null);
     setModalOpen(true);
   }
 
   async function handleConfirmDraw() {
-    if (!pendingDraw || modalConductorId == null) {
+    if (modalConductorId == null) {
       return;
     }
 
@@ -144,15 +132,14 @@ export default function Home() {
     try {
       const response = await createDraw({
         conductorId: modalConductorId,
-        primaryPlayerIds: pendingDraw.primaryIds,
-        reservePlayerIds: pendingDraw.reserveIds,
+        lockedPlayerIds,
+        candidatePlayerIds: candidatePoolIds,
       });
 
       setLatestDraw(response.draw);
       setDrawHistory((prev) => [response.draw, ...prev.filter((draw) => draw.id !== response.draw.id)]);
       setDrawError(null);
       setModalOpen(false);
-      setPendingDraw(null);
       setModalConductorId(null);
     } catch (submitError) {
       setDrawError((submitError as Error).message);
@@ -240,14 +227,21 @@ export default function Home() {
             )}
 
             <div className="mb-8">
-              <PlayerSelector selectedPlayers={selectedPlayers} onSelectionChange={setSelectedPlayers} />
+              <PlayerSelector
+                candidateIds={candidatePlayerIds}
+                lockedIds={lockedPlayerIds}
+                onChange={({ candidateIds, lockedIds }) => {
+                  setCandidatePlayerIds(candidateIds);
+                  setLockedPlayerIds(lockedIds);
+                }}
+              />
             </div>
 
             <div className="mb-8 text-center">
-              <DrawButton onClick={handlePrepareDraw} disabled={selectedCount < 12 || isDrawing} isDrawing={isDrawing} />
-              {selectedCount < 12 && (
+              <DrawButton onClick={handlePrepareDraw} disabled={totalParticipants < 12 || isDrawing} isDrawing={isDrawing} />
+              {totalParticipants < 12 && (
                 <p className="mt-4 text-sm text-white/80">
-                  En az 12 oyuncu seçmelisiniz. Şu anda seçilen: {selectedCount}
+                  En az 12 oyuncu seçmelisiniz. Şu anda seçilen: {totalParticipants}
                 </p>
               )}
             </div>
@@ -262,8 +256,8 @@ export default function Home() {
             )}
 
             <div ref={resultsRef}>
-              <ResultsDisplay primaryPlayers={winners} reservePlayers={reserves} />
-              {winners.length > 0 && <ShareButtons winners={winners} resultsRef={resultsRef} />}
+              <ResultsDisplay lockedPlayers={latestDraw?.lockedPlayers ?? []} primaryPlayers={winners} reservePlayers={reserves} />
+              {winners.length > 0 && <ShareButtons winners={winners} lockedPlayers={latestDraw?.lockedPlayers ?? []} resultsRef={resultsRef} />}
             </div>
 
             <div className="mt-10">
@@ -345,19 +339,10 @@ export default function Home() {
         onClose={() => {
           if (!isDrawing) {
             setModalOpen(false);
-            setPendingDraw(null);
             setModalConductorId(null);
           }
         }}
       />
     </div>
   );
-}
-
-function shuffle(array: number[]): number[] {
-  for (let i = array.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
 }

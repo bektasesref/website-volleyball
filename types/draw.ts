@@ -3,6 +3,7 @@ import type { PlayerRef } from "./player";
 export type DrawRecord = {
   id: string;
   conductor: PlayerRef;
+  lockedPlayers: PlayerRef[];
   primaryPlayers: PlayerRef[];
   reservePlayers: PlayerRef[];
   createdAt: string;
@@ -11,8 +12,8 @@ export type DrawRecord = {
 
 export type CreateDrawPayload = {
   conductorId: number;
-  primaryPlayerIds: number[];
-  reservePlayerIds: number[];
+  lockedPlayerIds: number[];
+  candidatePlayerIds: number[];
   cycleKey?: string;
 };
 

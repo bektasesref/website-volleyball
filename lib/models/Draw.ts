@@ -1,4 +1,4 @@
-import { Schema, model, models, type InferSchemaType, type HydratedDocument } from "mongoose";
+import { Schema, model, models, type InferSchemaType, type HydratedDocument, type Model } from "mongoose";
 import type { PlayerRef } from "@/types/player";
 
 type PlayerSnapshot = PlayerRef;
@@ -14,6 +14,10 @@ const PlayerSnapshotSchema = new Schema<PlayerSnapshot>(
 const DrawSchema = new Schema(
   {
     conductor: { type: PlayerSnapshotSchema, required: true },
+    lockedPlayers: {
+      type: [PlayerSnapshotSchema],
+      default: [],
+    },
     primaryPlayers: {
       type: [PlayerSnapshotSchema],
       required: true,
@@ -46,5 +50,11 @@ DrawSchema.index({ cycleKey: 1, createdAt: -1 });
 export type Draw = InferSchemaType<typeof DrawSchema>;
 export type DrawDocument = HydratedDocument<Draw>;
 
-export const DrawModel = models.Draw ?? model<Draw>("Draw", DrawSchema);
+const existingDrawModel = models.Draw as Model<Draw> | undefined;
+
+if (existingDrawModel && existingDrawModel.schema.path("lockedPlayers") === undefined) {
+  delete models.Draw;
+}
+
+export const DrawModel = (models.Draw as Model<Draw>) ?? model<Draw>("Draw", DrawSchema);
 
