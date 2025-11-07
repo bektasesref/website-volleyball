@@ -1,95 +1,83 @@
-# Online Turnuva Kura - Voleybol
+# Online Turnuva Kura & All-Star Platformu
 
-Next.js ile oluşturulmuş 12 kişilik voleybol takımı için çevrim içi kura ve All-Star oylama uygulaması.
+12 kişilik voleybol grubu için haftalık kura çekimi ve gizli All-Star oylamasını tek panelde yürüten Next.js uygulaması.
 
-## Özellikler
+## Öne Çıkanlar
 
-- 🎲 **Haftalık Kura Yönetimi**: Katılımcı listesinden 12 oyuncu rastgele seçilir, kura yapan kişi ve tarih MongoDB'ye kaydedilir.
-- 🗂️ **Kura Geçmişi**: Önceki kuraları API üzerinden çekerek header'da en güncel sonucu ve detaylı geçmiş listesini gösterir.
-- 🗳️ **All-Star Oylaması**: Gizli oy mantığıyla 12 kişilik All-Star kadrosu seçilir, oy dağılımı ve tarihçesi tutulur.
-- ✨ **Animasyonlu ve Modern UI**: Framer Motion animasyonları, Tailwind CSS + shadcn/ui bileşenleri.
-- 📤 **Paylaşım Araçları**: Kura sonucunu metin olarak kopyala, WhatsApp'ta paylaş veya görsel olarak indir.
-- 🔒 **Tip Güvenliği**: Zod, Axios ve TypeScript ile uçtan uca typed API iletişimi.
+- 🎲 **Haftalık Kura Akışı**: Oyuncular seçilir, kurayı başlatan kişi modaldan belirlenir ve sonuç MongoDB’ye kaydedilir.
+- 🗂️ **Kura Arşivi**: Header’da son kura özeti, açılır listede geçmiş detayları; ana kadro + yedekler ayrı tutulur.
+- 🗳️ **All-Star Oylaması**: Her oyuncu 12 kişilik kadroya kendisini de dahil ederek gizli oy verebilir; sonuçlar sadece toplu istatistik olarak gösterilir.
+- 🔐 **Gizli Oy Geçmişi**: Toplam oy veren sayısı görülebilir, kimlerin kimi seçtiği sistemde saklı kalır.
+- ✨ **Modern UI/UX**: Blur’lu fotoğraf arka plan, Framer Motion animasyonları, shadcn/ui bileşenleri ve paylaşım aksiyonları.
+- 🔄 **Typed API Katmanı**: Axios interceptor’lu istemci, Zod doğrulamaları ve TypeScript tipleri ile uçtan uca güvenli iletişim.
 
-## Teknik Stack
+## Teknolojiler
 
-- **Next.js 14** (App Router)
-- **TypeScript**
-- **Tailwind CSS** + **shadcn/ui**
-- **Framer Motion** (animasyonlar)
-- **Axios** + **Zod** (typed API katmanı)
-- **Mongoose** + **MongoDB Atlas** (kalıcı veri)
-- **date-fns** (tarih formatlama)
-- **html2canvas** (paylaşılabilir görsel üretimi)
+- Next.js 14 (App Router, React 19)
+- TypeScript
+- Tailwind CSS & shadcn/ui
+- Framer Motion
+- Axios + Zod
+- MongoDB Atlas + Mongoose
+- date-fns, html2canvas
 
 ## Kurulum
 
 ```bash
-# Bağımlılıkları yükle
 npm install
-
-# Development server'ı başlat
 npm run dev
 ```
 
-Uygulama `http://localhost:3000` adresinde çalışacaktır.
+Uygulama varsayılan olarak `http://localhost:3000` adresinde çalışır.
 
 ### Ortam Değişkenleri
 
-`.env.local` dosyanızda aşağıdaki değişkenlerin tanımlı olduğundan emin olun:
+`.env.local` dosyasına minimum şu değerler eklenmelidir:
 
 ```env
 MONGODB_URI="<atlas bağlantınız>"
 NEXT_PUBLIC_API_BASE_URL="http://localhost:3000"
+# Opsiyonel: MONGODB_DB_NAME="volleyball"
 ```
 
-Opsiyonel olarak `MONGODB_DB_NAME` tanımlayarak varsayılan veritabanı adını değiştirebilirsiniz.
+### Veritabanı Yapısı
 
-### Veritabanı
+- `Draw` modeli: konduktör snapshot’ı, 12 kişilik ana kadro, yedekler ve haftalık cycle anahtarı.
+- `AllStarBallot` modeli: oy veren snapshot’ı, 12 seçim ve birleştirilmiş sonuçlar için zaman damgası.
+- `lib/db.ts` tekil mongoose bağlantısını cache’ler.
 
-Uygulama bağlantı sırasında istemci tarafında otomatik olarak MongoDB Atlas kümesine bağlanır. Mevcut modeller:
+## Kullanım Akışları
 
-- `Draw`: kura sonucu, sorumlu oyuncu, ana ve yedek oyuncu listeleri
-- `AllStarBallot`: oyunuzu kullanan oyuncu, 12 kişilik tercih listesi, tarih
+### 1. Haftalık Kura
 
-`lib/db.ts` bağlantıyı cache'leyerek sunucu tarafında tekrar kullanır.
+1. Varsayılan olarak seçilmiş oyuncu listesini kontrol edin, gerekirse seçimleri değiştirin.
+2. “Kura Çek” butonuna basın; açılan pencerede kurayı başlatan kişiyi seçin.
+3. Sistem 12 kişilik ana kadro + yedekleri rastgele oluşturur, MongoDB’ye kaydeder ve anasayfayı günceller.
+4. Sonucu kopyalayın, WhatsApp’ta paylaşın veya ekran görüntüsünü html2canvas ile alın.
+5. “Geçmiş Kuraları Göster” ile önceki kayıtları listeleyin.
 
-## Kullanım
+### 2. All-Star Oylaması
 
-### Kura Sekmesi
+1. Oy verecek oyuncuyu drop-down’dan seçin (oy veren kişi kendisini de tercih listesine ekleyebilir).
+2. 12 farklı oyuncuyu seçin; seçimler tekrarsız olmalıdır.
+3. “Oyumu Gönder” ile API’ye gönderin. Aynı kişi aynı hafta tekrar oy kullanmaya çalışırsa 409 çatışma yanıtı döner.
+4. Sonuç kartında toplam oy sayısı ve isimlere göre oy dağılımı görüntülenir.
+5. “Geçmiş Oyları Göster” yalnızca toplam oy veren sayısını listeler, bireysel tercihleri gizli tutar.
 
-1. Katılımcı listesini kontrol edin, bu haftanın oyuncularını işaretleyin (varsayılan olarak herkes seçili gelir).
-2. "Kura Çek" butonuna tıklayın, açılan pencerede kurayı başlatan kişiyi seçin.
-3. Kura MongoDB'ye kaydedilir; seçilen 12 oyuncu ve yedekler ekranda, başlıkta ise sorumlu ve tarih bilgisi görünür.
-4. Sonucu metin olarak kopyalayın, WhatsApp'ta paylaşın veya görsel olarak dışa aktarın.
-5. "Geçmiş Kuraları Göster" alanından önceki çekilişleri inceleyin.
+## Geliştirme İpuçları
 
-### All-Star Sekmesi
+- Tipler `types/` altında, Zod şemaları `lib/validation/` klasöründe tutulur.
+- İstemci tarafı veri çağrıları `services/` dizinindeki typed fonksiyonlar üzerinden yapılır.
+- Paylaşım özelliği `components/ShareButtons.tsx` ile kopyalama, WhatsApp ve görsel çıkışı destekler.
+- Arka plan görseli `public/images/bg.jpeg` ile blur + düşük opaklık gradient overlay kombinasyonu.
 
-1. Oy kullanacak kişiyi açılır menüden seçin (kendi adınıza oy kullanamazsınız).
-2. Maksimum 12 oyuncu seçerek All-Star kadronuzu oluşturun.
-3. "Oyumu Gönder" diyerek oyu kaydedin. Sistem aynı oyuncu adına tekrar oy kullanılmasını engeller.
-4. Sonuç kartında toplam oy sayısını ve oy dağılımını takip edin, gerektiğinde geçmiş oyları listeleyin.
+## Manuel Doğrulama
 
-## Oyuncu Listesini Güncelleme
-
-Oyuncu isimlerini güncellemek için `constants/players.ts` dosyasını düzenleyin:
-
-```typescript
-export const ALL_PLAYERS = [
-  { id: 1, name: "Oyuncu 1" },
-  { id: 2, name: "Oyuncu 2" },
-  // ... gerçek isimler
-];
-```
-
-## Manuel Doğrulama Listesi
-
-- [ ] Varsayılan oyuncu listesi ile kura çekilerek sonuçların paylaşım seçenekleri denenir.
-- [ ] Kurayı başlatan kişi seçildiğinde kayıt MongoDB Atlas üzerinde doğrulanır (`Draw` koleksiyonu).
-- [ ] All-Star sekmesinde 12 farklı oyuncu seçilerek oy kullanılır, oy dağılımı güncellenir.
-- [ ] Aynı oyuncu için ikinci oy denemesinde API'den 409 hatası alındığı ve UI'da mesaj gösterildiği doğrulanır.
-- [ ] "Geçmiş Kuraları Göster" ve "Geçmiş Oyları Göster" butonları listeleri doğru biçimde açıp kapatır.
+- [ ] Kura akışıyla yeni sonuç kaydedilir, header ve geçmiş güncellenir.
+- [ ] Paylaşım butonları metin kopyalama / WhatsApp / görsel indirme adımlarını doğru yürütür.
+- [ ] All-Star oylamasında aynı oyuncu için tekrarlı oy 409 hatası üretir.
+- [ ] All-Star geçmiş paneli yalnızca toplam oy veren sayısını gösterir.
+- [ ] MongoDB Atlas üzerinde `Draw` ve `AllStarBallot` koleksiyonları kayıtları doğru saklar.
 
 ## Lisans
 
