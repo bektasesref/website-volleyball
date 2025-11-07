@@ -2,25 +2,18 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
-import type { Player } from "@/constants/players";
-import { ALL_PLAYERS } from "@/constants/players";
+import { CheckCircle2, UsersRound } from "lucide-react";
+import type { PlayerRef } from "@/types/player";
 
 interface ResultsDisplayProps {
-  winners: number[];
-  isDrawing: boolean;
+  primaryPlayers: PlayerRef[];
+  reservePlayers?: PlayerRef[];
 }
 
-export function ResultsDisplay({ winners, isDrawing }: ResultsDisplayProps) {
-  if (winners.length === 0) return null;
-
-  const getPlayerById = (id: number): Player | undefined => {
-    return ALL_PLAYERS.find((p) => p.id === id);
-  };
-
-  const winnerPlayers = winners
-    .map(getPlayerById)
-    .filter((p): p is Player => p !== undefined);
+export function ResultsDisplay({ primaryPlayers, reservePlayers = [] }: ResultsDisplayProps) {
+  if (primaryPlayers.length === 0) {
+    return null;
+  }
 
   return (
     <Card className="w-full mt-6 bg-linear-to-br from-blue-50 to-orange-50 dark:from-blue-950 dark:to-orange-950">
@@ -32,7 +25,7 @@ export function ResultsDisplay({ winners, isDrawing }: ResultsDisplayProps) {
       </CardHeader>
       <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         <AnimatePresence mode="popLayout">
-          {winnerPlayers.map((player, index) => (
+          {primaryPlayers.map((player, index) => (
             <motion.div
               key={player.id}
               layout
@@ -55,6 +48,24 @@ export function ResultsDisplay({ winners, isDrawing }: ResultsDisplayProps) {
           ))}
         </AnimatePresence>
       </CardContent>
+      {reservePlayers.length > 0 && (
+        <div className="border-t border-orange-200 bg-white/60 p-4 dark:bg-gray-900/40">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-orange-600 dark:text-orange-300">
+            <UsersRound className="h-4 w-4" />
+            Yedek Oyuncular
+          </div>
+          <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            {reservePlayers.map((player) => (
+              <span
+                key={player.id}
+                className="rounded-full bg-orange-100 px-3 py-1 text-orange-700 dark:bg-orange-900/40 dark:text-orange-200"
+              >
+                {player.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

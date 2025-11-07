@@ -4,25 +4,20 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Copy, Share2, Check } from "lucide-react";
-import { ALL_PLAYERS } from "@/constants/players";
+import type { PlayerRef } from "@/types/player";
 
 interface ShareButtonsProps {
-  winners: number[];
+  winners: PlayerRef[];
   resultsRef?: { current: HTMLDivElement | null };
 }
 
 export function ShareButtons({ winners, resultsRef }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
 
-  const getPlayerById = (id: number) => {
-    return ALL_PLAYERS.find((p) => p.id === id);
-  };
-
   const handleCopy = () => {
     const winnersText = winners
-      .map((id, index) => {
-        const player = getPlayerById(id);
-        return `${index + 1}. ${player?.name || "Oyuncu"}`;
+      .map((player, index) => {
+        return `${index + 1}. ${player.name}`;
       })
       .join("\n");
 
@@ -67,9 +62,8 @@ export function ShareButtons({ winners, resultsRef }: ShareButtonsProps) {
 
   const handleWhatsApp = () => {
     const winnersText = winners
-      .map((id, index) => {
-        const player = getPlayerById(id);
-        return `${index + 1}. ${player?.name || "Oyuncu"}`;
+      .map((player, index) => {
+        return `${index + 1}. ${player.name}`;
       })
       .join("\n");
 
@@ -118,6 +112,20 @@ export function ShareButtons({ winners, resultsRef }: ShareButtonsProps) {
         >
           <Share2 className="mr-2" />
           WhatsApp
+        </Button>
+      </motion.div>
+
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        className="flex-1"
+      >
+        <Button
+          onClick={handleShare}
+          className="w-full bg-orange-500 text-white hover:bg-orange-600"
+          disabled={winners.length === 0}
+        >
+          Görsel Paylaş
         </Button>
       </motion.div>
     </div>

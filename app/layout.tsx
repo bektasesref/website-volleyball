@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Online Turnuva Kura - Voleybol",
-  description: "12 kişilik voleybol takımı için kura çekimi",
+  title: "Online Voleybol Takım Yönetimi - Kura & All Star",
+  description: "12 kişilik voleybol takımı için kura çekimi ve all star seçimi",
 };
 
 export default function RootLayout({
