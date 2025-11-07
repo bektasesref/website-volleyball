@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { ALL_PLAYERS } from "@/constants/players";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchParticipation, submitParticipation } from "@/services/participation";
 import { ApiError } from "@/lib/http/apiError";
 import type {
@@ -113,18 +114,22 @@ export function ParticipationTab() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white/15 p-6 text-white shadow-lg backdrop-blur">
-        <div className="mb-4 space-y-4">
+      <Card className="border-none bg-white" data-card="participation-form">
+        <CardHeader className="pb-4">
+          <CardTitle>Haftalık Katılım Anketi</CardTitle>
+          <CardDescription>Bu hafta maçta olup olmayacağınızı belirtin, kura sekmesi otomatik güncellensin.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-white/80">Oyuncu</label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Oyuncu</label>
             <select
               value={selectedPlayerId ?? ""}
               onChange={(event) => setSelectedPlayerId(Number(event.target.value))}
-              className="w-full rounded-lg border border-white/20 bg-white/10 p-3 text-sm text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-400"
               disabled={submitting}
             >
               {availablePlayers.map((player) => (
-                <option key={player.id} value={player.id} className="text-gray-900">
+                <option key={player.id} value={player.id}>
                   {player.name}
                 </option>
               ))}
@@ -132,7 +137,7 @@ export function ParticipationTab() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-medium text-white/80">Katılım Durumu</div>
+            <div className="mb-2 text-sm font-medium text-gray-700">Katılım Durumu</div>
             <div className="grid gap-3 sm:grid-cols-2">
               {STATUS_OPTIONS.map((option) => {
                 const isSelected = selectedStatus === option.value;
@@ -143,48 +148,52 @@ export function ParticipationTab() {
                     className={clsx(
                       "rounded-xl border p-4 text-left transition",
                       isSelected
-                        ? "border-green-400 bg-green-500/80 text-white shadow"
-                        : "border-white/20 bg-white/10 text-white/90 hover:border-green-400 hover:bg-green-400/30"
+                        ? "border-green-500 bg-green-500 text-white shadow"
+                        : "border-gray-200 bg-white text-gray-800 hover:border-green-400 hover:bg-green-50"
                     )}
                     onClick={() => setSelectedStatus(option.value)}
                     disabled={submitting}
                   >
                     <div className="text-base font-semibold">{option.label}</div>
-                    <div className="text-xs text-white/70">{option.description}</div>
+                    <div className="text-xs text-gray-500">{option.description}</div>
                   </button>
                 );
               })}
             </div>
           </div>
-        </div>
 
-        <button
-          type="button"
-          className="mt-4 w-full rounded-lg bg-green-500 py-3 text-sm font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60"
-          onClick={handleSubmit}
-          disabled={submitting}
-        >
-          {submitting ? "Gönderiliyor..." : "Katılımımı Kaydet"}
-        </button>
-      </div>
+          <button
+            type="button"
+            className="w-full rounded-lg bg-green-500 py-3 text-sm font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? "Gönderiliyor..." : "Katılımımı Kaydet"}
+          </button>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-2xl bg-white/10 p-6 text-white/90 shadow-lg backdrop-blur">
+      <Card className="border-none bg-white" data-card="participation-summary">
+        <CardHeader className="pb-4">
+          <CardTitle>Bu Haftanın Katılım Özeti</CardTitle>
+          <CardDescription>Toplam katılan / katılamayan sayısı ve güncellenme zamanı.</CardDescription>
+        </CardHeader>
+        <CardContent>
         {loading ? (
-          <div className="text-center text-white/70">Katılım bilgileri yükleniyor...</div>
+          <div className="text-center text-gray-500">Katılım bilgileri yükleniyor...</div>
         ) : aggregates ? (
           <div className="space-y-4">
-            <div className="text-sm uppercase tracking-wide text-white/70">Bu Haftanın Katılım Özeti</div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-green-400/60 bg-green-500/30 p-4 text-white">
-                <div className="text-sm">Katılacak</div>
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+                <div className="text-sm font-medium">Katılacak</div>
                 <div className="text-3xl font-bold">{aggregates.yes}</div>
               </div>
-              <div className="rounded-lg border border-red-400/60 bg-red-500/30 p-4 text-white">
-                <div className="text-sm">Katılamayacak</div>
+              <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                <div className="text-sm font-medium">Katılamayacak</div>
                 <div className="text-3xl font-bold">{aggregates.no}</div>
               </div>
             </div>
-            <div className="text-xs text-white/60">
+            <div className="text-xs text-gray-500">
               Toplam {aggregates.totalResponses} yanıt • Güncellendi: {aggregates.lastUpdated
                 ? new Date(aggregates.lastUpdated).toLocaleString("tr-TR", {
                     dateStyle: "medium",
@@ -194,9 +203,10 @@ export function ParticipationTab() {
             </div>
           </div>
         ) : (
-          <div className="text-center text-white/70">Katılım verisi bulunamadı.</div>
+          <div className="text-center text-gray-500">Katılım verisi bulunamadı.</div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       <div>
         <button
@@ -207,26 +217,34 @@ export function ParticipationTab() {
           {isHistoryOpen ? "Yanıt Geçmişini Gizle" : "Yanıt Geçmişini Göster"}
         </button>
         {isHistoryOpen && (
-          <div className="mt-4 space-y-2 rounded-lg bg-white/10 p-4 text-white/90 backdrop-blur">
-            {records.length === 0 ? (
-              <div className="text-sm text-white/70">Henüz yanıt yok.</div>
-            ) : (
-              records.map((record) => (
-                <div key={record.id} className="flex items-center justify-between text-sm">
-                  <span className="font-medium">{record.player.name}</span>
-                  <span>{
-                    STATUS_OPTIONS.find((option) => option.value === record.status)?.label ?? record.status
-                  }</span>
-                  <span className="text-xs text-white/60">
-                    {new Date(record.submittedAt).toLocaleString("tr-TR", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </span>
+          <Card className="mt-4 border border-gray-200" data-card="participation-history">
+            <CardHeader className="pb-3">
+              <CardTitle>Katılım Yanıtları</CardTitle>
+              <CardDescription>Haftanın yanıt geçmişini görüntüleyin.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-gray-700">
+              {records.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center text-gray-500">
+                  Henüz yanıt yok.
                 </div>
-              ))
-            )}
-          </div>
+              ) : (
+                records.map((record) => (
+                  <div key={record.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+                    <span className="font-medium text-gray-800">{record.player.name}</span>
+                    <span>{
+                      STATUS_OPTIONS.find((option) => option.value === record.status)?.label ?? record.status
+                    }</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(record.submittedAt).toLocaleString("tr-TR", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

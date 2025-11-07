@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { ALL_PLAYERS } from "@/constants/players";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchMatchDay, submitMatchDayVote } from "@/services/matchDay";
 import { ApiError } from "@/lib/http/apiError";
 import type { DayOfWeek, GetMatchDayResponse } from "@/types/match-day";
@@ -109,18 +110,22 @@ export function MatchDayTab() {
         </div>
       )}
 
-      <div className="rounded-2xl bg-white/15 p-6 text-white shadow-lg backdrop-blur">
-        <div className="mb-4 space-y-4">
+      <Card className="border-none bg-white" data-card="match-day-form">
+        <CardHeader className="pb-4">
+          <CardTitle>Haftalık Maç Günü Tercihi</CardTitle>
+          <CardDescription>Oy kullanacak oyuncuyu seçip haftanın günlerinden birini işaretleyin.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-white/80">Oy Kullanan Oyuncu</label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Oy Kullanan Oyuncu</label>
             <select
               value={selectedVoterId ?? ""}
               onChange={(event) => setSelectedVoterId(Number(event.target.value))}
-              className="w-full rounded-lg border border-white/20 bg-white/10 p-3 text-sm text-white focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
               disabled={submitting}
             >
               {availablePlayers.map((player) => (
-                <option key={player.id} value={player.id} className="text-gray-900">
+                <option key={player.id} value={player.id}>
                   {player.name}
                 </option>
               ))}
@@ -128,7 +133,7 @@ export function MatchDayTab() {
           </div>
 
           <div>
-            <div className="mb-2 text-sm font-medium text-white/80">Maç Günü Tercihi</div>
+            <div className="mb-2 text-sm font-medium text-gray-700">Maç Günü Tercihi</div>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {DAY_OPTIONS.map((option) => {
                 const isSelected = selectedDay === option.value;
@@ -139,8 +144,8 @@ export function MatchDayTab() {
                     className={clsx(
                       "rounded-lg border p-3 text-left text-sm transition",
                       isSelected
-                        ? "border-orange-400 bg-orange-500/80 text-white shadow"
-                        : "border-white/20 bg-white/10 text-white/90 hover:border-orange-400 hover:bg-orange-400/30"
+                        ? "border-orange-500 bg-orange-500 text-white shadow"
+                        : "border-gray-200 bg-white text-gray-800 hover:border-orange-400 hover:bg-orange-50"
                     )}
                     onClick={() => setSelectedDay(option.value)}
                     disabled={submitting}
@@ -151,25 +156,29 @@ export function MatchDayTab() {
               })}
             </div>
           </div>
-        </div>
 
-        <button
-          type="button"
-          className="mt-4 w-full rounded-lg bg-orange-500 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
-          onClick={handleSubmit}
-          disabled={submitting}
-        >
-          {submitting ? "Gönderiliyor..." : "Tercihimi Kaydet"}
-        </button>
-      </div>
+          <button
+            type="button"
+            className="w-full rounded-lg bg-orange-500 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? "Gönderiliyor..." : "Tercihimi Kaydet"}
+          </button>
+        </CardContent>
+      </Card>
 
-      <div className="rounded-2xl bg-white/10 p-6 text-white/90 shadow-lg backdrop-blur">
+      <Card className="border-none bg-white" data-card="match-day-results">
+        <CardHeader className="pb-4">
+          <CardTitle>Bu Haftanın Kazanan Günü</CardTitle>
+          <CardDescription>Oy dağılımı ve toplam oy sayısı otomatik olarak güncellenir.</CardDescription>
+        </CardHeader>
+        <CardContent>
         {loading ? (
-          <div className="text-center text-white/70">Sonuçlar yükleniyor...</div>
+          <div className="text-center text-gray-500">Sonuçlar yükleniyor...</div>
         ) : results ? (
           <div className="space-y-4">
-            <div className="text-sm uppercase tracking-wide text-white/70">Bu Haftanın Kazanan Günü</div>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-gray-800">
               {results.winningDay ?
                 DAY_OPTIONS.find((option) => option.value === results.winningDay)?.label ?? "" :
                 "Henüz yeterli oy yok"}
@@ -184,8 +193,8 @@ export function MatchDayTab() {
                     className={clsx(
                       "rounded-lg border p-4 text-sm",
                       isWinner
-                        ? "border-orange-400 bg-orange-500/30 text-white"
-                        : "border-white/10 bg-white/5 text-white/80"
+                        ? "border-orange-400 bg-orange-50 text-orange-700"
+                        : "border-gray-200 bg-gray-50 text-gray-700"
                     )}
                   >
                     <div className="text-base font-semibold">{label}</div>
@@ -194,7 +203,7 @@ export function MatchDayTab() {
                 );
               })}
             </div>
-            <div className="text-xs text-white/60">
+            <div className="text-xs text-gray-500">
               Toplam {results.totalVotes} oy • Güncellendi: {results.lastUpdated ? new Date(results.lastUpdated).toLocaleString("tr-TR", {
                 dateStyle: "medium",
                 timeStyle: "short",
@@ -202,9 +211,10 @@ export function MatchDayTab() {
             </div>
           </div>
         ) : (
-          <div className="text-center text-white/70">Sonuç bulunamadı.</div>
+          <div className="text-center text-gray-500">Sonuç bulunamadı.</div>
         )}
-      </div>
+        </CardContent>
+      </Card>
 
       <div>
         <button
@@ -215,27 +225,35 @@ export function MatchDayTab() {
           {isHistoryOpen ? "Oy Geçmişini Gizle" : "Oy Geçmişini Göster"}
         </button>
         {isHistoryOpen && (
-          <div className="mt-4 space-y-2 rounded-lg bg-white/10 p-4 text-white/90 backdrop-blur">
-            {votes.length === 0 ? (
-              <div className="text-sm text-white/70">Henüz oy kullanılmadı.</div>
-            ) : (
-              votes.map((vote) => {
-                const label = DAY_OPTIONS.find((option) => option.value === vote.day)?.label ?? vote.day;
-                return (
-                  <div key={vote.id} className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{vote.voter.name}</span>
-                    <span>{label}</span>
-                    <span className="text-xs text-white/60">
-                      {new Date(vote.submittedAt).toLocaleString("tr-TR", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <Card className="mt-4 border border-gray-200" data-card="match-day-history">
+            <CardHeader className="pb-3">
+              <CardTitle>Oy Geçmişi</CardTitle>
+              <CardDescription>Haftalık oyları listeleyip detaylarını inceleyin.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-gray-700">
+              {votes.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center text-gray-500">
+                  Henüz oy kullanılmadı.
+                </div>
+              ) : (
+                votes.map((vote) => {
+                  const label = DAY_OPTIONS.find((option) => option.value === vote.day)?.label ?? vote.day;
+                  return (
+                    <div key={vote.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+                      <span className="font-medium text-gray-800">{vote.voter.name}</span>
+                      <span>{label}</span>
+                      <span className="text-xs text-gray-500">
+                        {new Date(vote.submittedAt).toLocaleString("tr-TR", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

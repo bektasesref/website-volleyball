@@ -27,6 +27,14 @@ export default function Home() {
         className="absolute inset-0 -z-20 bg-[url('/images/bg.jpeg')] bg-cover bg-center filter blur-xs scale-110"
         aria-hidden="true"
       />
+
+      <div
+        className="fixed bottom-0 right-0 text-white/400 opacity-5 cursor-pointer"
+        aria-hidden="true" onClick={() => window.open("https://www.instagram.com/bektasesref/", "_blank")}
+      >
+        @bektasesref 💻
+      </div>
+
       <div
         className="absolute inset-0 -z-10 bg-linear-to-br from-blue-500/70 via-blue-400/50 to-orange-400/60"
         aria-hidden="true"
@@ -47,11 +55,10 @@ export default function Home() {
               <button
                 key={tab.id}
                 type="button"
-                className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  isActive
-                    ? "bg-white text-orange-600 shadow"
-                    : "text-white/80 hover:bg-white/20"
-                }`}
+                className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition ${isActive
+                  ? "bg-white text-orange-600 shadow"
+                  : "text-white/80 hover:bg-white/20"
+                  }`}
                 onClick={() => setActiveTab(tab.id)}
               >
                 {tab.label}
