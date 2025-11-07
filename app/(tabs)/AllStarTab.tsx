@@ -98,7 +98,7 @@ export function AllStarTab() {
             players={availablePlayers}
             onSubmit={handleAllStarSubmit}
             isSubmitting={allStarSubmitting}
-            defaultVoterId={availablePlayers[0]?.id ?? null}
+            defaultVoterId={null}
           />
           <AllStarResultsCard results={allStarResults} />
         </div>

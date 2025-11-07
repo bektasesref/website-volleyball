@@ -30,7 +30,7 @@ export function MatchDayTab() {
     []
   );
 
-  const [selectedVoterId, setSelectedVoterId] = useState<number | null>(availablePlayers[0]?.id ?? null);
+  const [selectedVoterId, setSelectedVoterId] = useState<number | null>(null);
   const [selectedDay, setSelectedDay] = useState<DayOfWeek>("monday");
   const [status, setStatus] = useState<StatusMessage>(null);
   const [loading, setLoading] = useState(true);
@@ -120,10 +120,14 @@ export function MatchDayTab() {
             <label className="mb-2 block text-sm font-medium text-gray-700">Oy Kullanan Oyuncu</label>
             <select
               value={selectedVoterId ?? ""}
-              onChange={(event) => setSelectedVoterId(Number(event.target.value))}
+              onChange={(event) => {
+                const value = event.target.value;
+                setSelectedVoterId(value === "" ? null : Number(value));
+              }}
               className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400"
               disabled={submitting}
             >
+              <option value="">Oyuncu seçin...</option>
               {availablePlayers.map((player) => (
                 <option key={player.id} value={player.id}>
                   {player.name}
@@ -161,7 +165,7 @@ export function MatchDayTab() {
             type="button"
             className="w-full rounded-lg bg-orange-500 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || selectedVoterId == null}
           >
             {submitting ? "Gönderiliyor..." : "Tercihimi Kaydet"}
           </button>

@@ -23,7 +23,7 @@ export function AllStarVoteForm({
   disabled = false,
   defaultVoterId,
 }: AllStarVoteFormProps) {
-  const initialVoterId = useMemo(() => defaultVoterId ?? players[0]?.id ?? null, [defaultVoterId, players]);
+  const initialVoterId = useMemo(() => defaultVoterId ?? null, [defaultVoterId]);
   const [voterId, setVoterId] = useState<number | null>(initialVoterId);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -85,10 +85,14 @@ export function AllStarVoteForm({
           <label className="mb-2 block text-sm font-medium text-muted-foreground">Oy Kullanan Oyuncu</label>
           <select
             value={voterId ?? ""}
-            onChange={(event) => setVoterId(Number(event.target.value))}
+            onChange={(event) => {
+              const value = event.target.value;
+              setVoterId(value === "" ? null : Number(value));
+            }}
             className="w-full rounded-lg border border-gray-300 bg-white p-3 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900"
             disabled={disabled || isSubmitting}
           >
+            <option value="">Oyuncu seçin...</option>
             {players.map((player) => (
               <option key={player.id} value={player.id}>
                 {player.name}
@@ -136,7 +140,7 @@ export function AllStarVoteForm({
             type="button"
             className="flex-1 bg-orange-500 text-white hover:bg-orange-600"
             onClick={handleSubmit}
-            disabled={disabled || isSubmitting}
+            disabled={disabled || isSubmitting || voterId == null}
           >
             {isSubmitting ? "Gönderiliyor..." : "Oyumu Gönder"}
           </Button>

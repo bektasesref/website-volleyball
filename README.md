@@ -21,7 +21,7 @@
 - Framer Motion
 - Axios + Zod
 - MongoDB Atlas + Mongoose
-- date-fns, html2canvas
+- date-fns
 
 ## Kurulum
 
@@ -57,7 +57,7 @@ NEXT_PUBLIC_API_BASE_URL="http://localhost:3000"
 1. Varsayılan olarak seçilmiş oyuncu listesini kontrol edin, gerekirse seçimleri değiştirin.
 2. “Kura Çek” butonuna basın; açılan pencerede kurayı başlatan kişiyi seçin.
 3. Sistem 12 kişilik ana kadro + yedekleri rastgele oluşturur, MongoDB’ye kaydeder ve anasayfayı günceller.
-4. Sonucu kopyalayın, WhatsApp’ta paylaşın veya ekran görüntüsünü html2canvas ile alın.
+4. Sonucu kopyalayın veya WhatsApp’ta paylaşın.
 5. “Geçmiş Kuraları Göster” ile önceki kayıtları listeleyin.
 
 ### 2. All-Star Oylaması

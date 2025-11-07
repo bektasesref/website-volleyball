@@ -44,7 +44,7 @@ export function ParticipationTab() {
     []
   );
 
-  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(availablePlayers[0]?.id ?? null);
+  const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<ParticipationStatusOption>("yes");
   const [statusMessage, setStatusMessage] = useState<StatusMessage>(null);
   const [loading, setLoading] = useState(true);
@@ -159,10 +159,14 @@ export function ParticipationTab() {
             <label className="mb-2 block text-sm font-medium text-gray-700">Oyuncu</label>
             <select
               value={selectedPlayerId ?? ""}
-              onChange={(event) => setSelectedPlayerId(Number(event.target.value))}
+              onChange={(event) => {
+                const value = event.target.value;
+                setSelectedPlayerId(value === "" ? null : Number(value));
+              }}
               className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-400"
               disabled={submitting}
             >
+              <option value="">Oyuncu seçin...</option>
               {availablePlayers.map((player) => (
                 <option key={player.id} value={player.id}>
                   {player.name}
@@ -201,7 +205,7 @@ export function ParticipationTab() {
             type="button"
             className="w-full rounded-lg bg-green-500 py-3 text-sm font-semibold text-white transition hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-60"
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || selectedPlayerId == null}
           >
             {submitting ? "Gönderiliyor..." : "Katılımımı Kaydet"}
           </button>
