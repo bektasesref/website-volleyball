@@ -35,11 +35,6 @@ export function AllStarVoteForm({
       return;
     }
 
-    if (playerId === voterId) {
-      setLocalError("Kendi adınıza oy veremezsiniz.");
-      return;
-    }
-
     if (selectedIds.includes(playerId)) {
       setSelectedIds(selectedIds.filter((id) => id !== playerId));
       setLocalError(null);
@@ -100,9 +95,6 @@ export function AllStarVoteForm({
               </option>
             ))}
           </select>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Seçtiğiniz oyuncu listesinde kendinizi seçemezsiniz.
-          </p>
         </div>
 
         <div className="rounded-lg border border-dashed border-orange-300 bg-orange-50/70 p-3 text-sm text-orange-800 dark:border-orange-700 dark:bg-orange-900/30 dark:text-orange-100">
@@ -112,7 +104,7 @@ export function AllStarVoteForm({
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {players.map((player) => {
             const isSelected = selectedIds.includes(player.id);
-            const isDisabled = disabled || isSubmitting || (!isSelected && selectionCount >= MAX_SELECTION) || player.id === voterId;
+            const isDisabled = disabled || isSubmitting || (!isSelected && selectionCount >= MAX_SELECTION)
 
             return (
               <button
