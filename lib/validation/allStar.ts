@@ -13,21 +13,13 @@ export const submitAllStarBallotSchema = z
       .optional(),
   })
   .superRefine((payload, ctx) => {
-    const { voterId, pickIds } = payload;
+    const { pickIds } = payload;
     const unique = new Set(pickIds);
     if (unique.size !== pickIds.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "All-star selections must be unique.",
         path: ["pickIds"],
-      });
-    }
-
-    if (pickIds.includes(voterId)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Voter cannot vote for themselves.",
-        path: ["voterId"],
       });
     }
   });
