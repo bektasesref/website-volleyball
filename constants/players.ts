@@ -1,6 +1,6 @@
 export const ALL_PLAYERS = [
   { id: 1, name: "Ayşegül" },
-  { id: 2, name: "Ahmet" },
+  { id: 2, name: "Hale" },
   { id: 3, name: "Ahsen" },
   { id: 4, name: "Esma" },
   { id: 5, name: "Atakan" },

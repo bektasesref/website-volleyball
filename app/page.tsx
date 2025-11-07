@@ -185,9 +185,9 @@ export default function Home() {
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-bold text-white drop-shadow-lg md:text-5xl">
-            🏐 Online Turnuva Kura
+            🏐 Online Turnuva Kura & All-Star Oylaması
           </h1>
-          <p className="text-xl text-white/90">12 kişilik takım için kura çekimi</p>
+          <p className="text-xl text-white/90">12 kişilik takım için kura çekimi ve all-star oylaması</p>
         </div>
 
         <div className="mb-8 flex gap-2 rounded-full bg-white/15 p-1 backdrop-blur">
