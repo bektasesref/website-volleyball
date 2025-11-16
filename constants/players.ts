@@ -20,6 +20,7 @@ export const ALL_PLAYERS = [
   { id: 19, name: "Ömer" },
   { id: 20, name: "Onur" },
   { id: 21, name: "Volkan" },
+  { id: 22, name: "Berkay" },
 ];
 
 export type Player = {
