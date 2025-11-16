@@ -5,6 +5,7 @@ import { clsx } from "clsx";
 import { ALL_PLAYERS } from "@/constants/players";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchMatchDay, submitMatchDayVote } from "@/services/matchDay";
+import { deriveCycleKey } from "@/lib/utils/cycle";
 import { ApiError } from "@/lib/http/apiError";
 import type { DayOfWeek, GetMatchDayResponse } from "@/types/match-day";
 import type { PlayerRef } from "@/types/player";
@@ -35,36 +36,48 @@ export function MatchDayTab() {
   const [status, setStatus] = useState<StatusMessage>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [data, setData] = useState<GetMatchDayResponse | null>(null);
+  const [currentWeekData, setCurrentWeekData] = useState<GetMatchDayResponse | null>(null);
+  const [allVotes, setAllVotes] = useState<GetMatchDayResponse["votes"]>([]);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     void loadMatchDay();
+    void loadAllVotes();
   }, []);
 
   useEffect(() => {
-    if (!data || selectedVoterId == null) {
+    if (!currentWeekData || selectedVoterId == null) {
       return;
     }
-    const existingVote = data.votes.find((vote) => vote.voter.id === selectedVoterId);
+    const existingVote = currentWeekData.votes.find((vote) => vote.voter.id === selectedVoterId);
     if (existingVote) {
       setSelectedDay(existingVote.day);
     }
-  }, [data, selectedVoterId]);
+  }, [currentWeekData, selectedVoterId]);
 
-  const results = data?.results;
-  const votes = data?.votes ?? [];
+  const results = currentWeekData?.results;
+  const votes = allVotes;
 
   async function loadMatchDay() {
     try {
       setLoading(true);
-      const response = await fetchMatchDay({ limit: 50 });
-      setData(response);
+      const currentCycleKey = deriveCycleKey();
+      const response = await fetchMatchDay({ limit: 50, cycleKey: currentCycleKey });
+      setCurrentWeekData(response);
       setStatus(null);
     } catch (error) {
       setStatus({ type: "error", message: (error as Error).message });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadAllVotes() {
+    try {
+      const response = await fetchMatchDay({ limit: 200 });
+      setAllVotes(response.votes);
+    } catch (error) {
+      // Silently fail for history
     }
   }
 
@@ -81,13 +94,15 @@ export function MatchDayTab() {
         voterId: selectedVoterId,
         day: selectedDay,
       });
-      setData({
+      setCurrentWeekData({
         results: response.results,
         votes: [
           response.vote,
-          ...(data?.votes ?? []).filter((vote) => vote.id !== response.vote.id),
+          ...(currentWeekData?.votes ?? []).filter((vote) => vote.id !== response.vote.id),
         ],
       });
+      // Refresh all votes to include the new one
+      await loadAllVotes();
       setStatus({ type: "success", message: "Tercihiniz kaydedildi." });
     } catch (error) {
       const apiError = error as ApiError;
@@ -234,27 +249,47 @@ export function MatchDayTab() {
               <CardTitle>Oy Geçmişi</CardTitle>
               <CardDescription>Haftalık oyları listeleyip detaylarını inceleyin.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-gray-700">
+            <CardContent className="space-y-4 text-sm text-gray-700">
               {votes.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center text-gray-500">
                   Henüz oy kullanılmadı.
                 </div>
               ) : (
-                votes.map((vote) => {
-                  const label = DAY_OPTIONS.find((option) => option.value === vote.day)?.label ?? vote.day;
-                  return (
-                    <div key={vote.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
-                      <span className="font-medium text-gray-800">{vote.voter.name}</span>
-                      <span>{label}</span>
-                      <span className="text-xs text-gray-500">
-                        {new Date(vote.submittedAt).toLocaleString("tr-TR", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
+                (() => {
+                  const groupedByCycle = votes.reduce((acc, vote) => {
+                    const key = vote.cycleKey ?? "Bilinmeyen";
+                    if (!acc[key]) {
+                      acc[key] = [];
+                    }
+                    acc[key].push(vote);
+                    return acc;
+                  }, {} as Record<string, typeof votes>);
+
+                  return Object.entries(groupedByCycle)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .map(([cycleKey, cycleVotes]) => (
+                      <div key={cycleKey} className="space-y-2">
+                        <div className="sticky top-0 z-10 rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                          {cycleKey}
+                        </div>
+                        {cycleVotes.map((vote) => {
+                          const label = DAY_OPTIONS.find((option) => option.value === vote.day)?.label ?? vote.day;
+                          return (
+                            <div key={vote.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+                              <span className="font-medium text-gray-800">{vote.voter.name}</span>
+                              <span>{label}</span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(vote.submittedAt).toLocaleString("tr-TR", {
+                                  dateStyle: "medium",
+                                  timeStyle: "short",
+                                })}
+                              </span>
+                            </div>
+                          );
                         })}
-                      </span>
-                    </div>
-                  );
-                })
+                      </div>
+                    ));
+                })()
               )}
             </CardContent>
           </Card>

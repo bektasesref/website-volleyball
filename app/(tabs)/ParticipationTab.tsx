@@ -6,6 +6,7 @@ import { ALL_PLAYERS } from "@/constants/players";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchParticipation, submitParticipation } from "@/services/participation";
 import { fetchMatchDay } from "@/services/matchDay";
+import { deriveCycleKey } from "@/lib/utils/cycle";
 import { ApiError } from "@/lib/http/apiError";
 import type {
   GetParticipationResponse,
@@ -49,27 +50,29 @@ export function ParticipationTab() {
   const [statusMessage, setStatusMessage] = useState<StatusMessage>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [data, setData] = useState<GetParticipationResponse | null>(null);
+  const [currentWeekData, setCurrentWeekData] = useState<GetParticipationResponse | null>(null);
+  const [allRecords, setAllRecords] = useState<GetParticipationResponse["records"]>([]);
   const [matchDayData, setMatchDayData] = useState<GetMatchDayResponse | null>(null);
   const [isHistoryOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     void loadParticipation();
+    void loadAllRecords();
     void loadMatchDay();
   }, []);
 
   useEffect(() => {
-    if (!data || selectedPlayerId == null) {
+    if (!currentWeekData || selectedPlayerId == null) {
       return;
     }
-    const existingRecord = data.records.find((record) => record.player.id === selectedPlayerId);
+    const existingRecord = currentWeekData.records.find((record) => record.player.id === selectedPlayerId);
     if (existingRecord) {
       setSelectedStatus(existingRecord.status);
     }
-  }, [data, selectedPlayerId]);
+  }, [currentWeekData, selectedPlayerId]);
 
-  const aggregates = data?.aggregates;
-  const records = data?.records ?? [];
+  const aggregates = currentWeekData?.aggregates;
+  const records = allRecords;
   const winningDay = matchDayData?.results.winningDay;
   const winningDayLabel = winningDay
     ? DAY_OPTIONS.find((option) => option.value === winningDay)?.label ?? ""
@@ -78,8 +81,9 @@ export function ParticipationTab() {
   async function loadParticipation() {
     try {
       setLoading(true);
-      const response = await fetchParticipation({ limit: 50 });
-      setData(response);
+      const currentCycleKey = deriveCycleKey();
+      const response = await fetchParticipation({ limit: 50, cycleKey: currentCycleKey });
+      setCurrentWeekData(response);
       setStatusMessage(null);
     } catch (error) {
       setStatusMessage({ type: "error", message: (error as Error).message });
@@ -88,9 +92,19 @@ export function ParticipationTab() {
     }
   }
 
+  async function loadAllRecords() {
+    try {
+      const response = await fetchParticipation({ limit: 200 });
+      setAllRecords(response.records);
+    } catch (error) {
+      // Silently fail for history
+    }
+  }
+
   async function loadMatchDay() {
     try {
-      const response = await fetchMatchDay({ limit: 1 });
+      const currentCycleKey = deriveCycleKey();
+      const response = await fetchMatchDay({ limit: 1, cycleKey: currentCycleKey });
       setMatchDayData(response);
     } catch (error) {
       // Silently fail, don't show error for match day
@@ -110,13 +124,15 @@ export function ParticipationTab() {
         playerId: selectedPlayerId,
         status: selectedStatus,
       });
-      setData({
+      setCurrentWeekData({
         aggregates: response.aggregates,
         records: [
           response.record,
-          ...(data?.records ?? []).filter((record) => record.id !== response.record.id),
+          ...(currentWeekData?.records ?? []).filter((record) => record.id !== response.record.id),
         ],
       });
+      // Refresh all records to include the new one
+      await loadAllRecords();
       setStatusMessage({ type: "success", message: "Katılım durumunuz kaydedildi." });
     } catch (error) {
       const apiError = error as ApiError;
@@ -261,26 +277,46 @@ export function ParticipationTab() {
               <CardTitle>Katılım Yanıtları</CardTitle>
               <CardDescription>Haftanın yanıt geçmişini görüntüleyin.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm text-gray-700">
+            <CardContent className="space-y-4 text-sm text-gray-700">
               {records.length === 0 ? (
                 <div className="rounded-lg border border-dashed border-gray-200 p-4 text-center text-gray-500">
                   Henüz yanıt yok.
                 </div>
               ) : (
-                records.map((record) => (
-                  <div key={record.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
-                    <span className="font-medium text-gray-800">{record.player.name}</span>
-                    <span>{
-                      STATUS_OPTIONS.find((option) => option.value === record.status)?.label ?? record.status
-                    }</span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(record.submittedAt).toLocaleString("tr-TR", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </span>
-                  </div>
-                ))
+                (() => {
+                  const groupedByCycle = records.reduce((acc, record) => {
+                    const key = record.cycleKey ?? "Bilinmeyen";
+                    if (!acc[key]) {
+                      acc[key] = [];
+                    }
+                    acc[key].push(record);
+                    return acc;
+                  }, {} as Record<string, typeof records>);
+
+                  return Object.entries(groupedByCycle)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .map(([cycleKey, cycleRecords]) => (
+                      <div key={cycleKey} className="space-y-2">
+                        <div className="sticky top-0 z-10 rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                          {cycleKey}
+                        </div>
+                        {cycleRecords.map((record) => (
+                          <div key={record.id} className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2">
+                            <span className="font-medium text-gray-800">{record.player.name}</span>
+                            <span>{
+                              STATUS_OPTIONS.find((option) => option.value === record.status)?.label ?? record.status
+                            }</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(record.submittedAt).toLocaleString("tr-TR", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                              })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ));
+                })()
               )}
             </CardContent>
           </Card>

@@ -9,6 +9,7 @@ import { DrawHistory } from "@/components/DrawHistory";
 import { ConductorModal } from "@/components/ConductorModal";
 import { createDraw, fetchDraws } from "@/services/draws";
 import { fetchParticipation } from "@/services/participation";
+import { deriveCycleKey } from "@/lib/utils/cycle";
 import type { DrawRecord } from "@/types/draw";
 import type { PlayerRef } from "@/types/player";
 import type { GetParticipationResponse, ParticipationStatusOption } from "@/types/participation";
@@ -29,7 +30,8 @@ export function DrawTab() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [modalConductorId, setModalConductorId] = useState<number | null>(null);
 
-  const [participationData, setParticipationData] = useState<GetParticipationResponse | null>(null);
+  const [currentWeekParticipation, setCurrentWeekParticipation] = useState<GetParticipationResponse | null>(null);
+  const [allParticipationRecords, setAllParticipationRecords] = useState<GetParticipationResponse["records"]>([]);
   const [participationLoading, setParticipationLoading] = useState(true);
   const [participationError, setParticipationError] = useState<string | null>(null);
 
@@ -43,42 +45,48 @@ export function DrawTab() {
   useEffect(() => {
     void loadDraws();
     void loadParticipation();
+    void loadAllParticipationRecords();
   }, []);
 
-  const winners = latestDraw?.primaryPlayers ?? [];
-  const reserves = latestDraw?.reservePlayers ?? [];
+  const currentCycleKey = useMemo(() => deriveCycleKey(), []);
+  const currentWeekDraw = useMemo(() => {
+    if (!latestDraw || latestDraw.cycleKey !== currentCycleKey) {
+      return null;
+    }
+    return latestDraw;
+  }, [latestDraw, currentCycleKey]);
+
+  const winners = currentWeekDraw?.primaryPlayers ?? [];
+  const reserves = currentWeekDraw?.reservePlayers ?? [];
   const candidatePoolIds = useMemo(
     () => candidatePlayerIds.filter((id) => !lockedPlayerIds.includes(id)),
     [candidatePlayerIds, lockedPlayerIds]
   );
   const totalParticipants = lockedPlayerIds.length + candidatePoolIds.length;
   const participationStatuses = useMemo(() => {
-    if (!participationData) {
-      return {} as Record<number, ParticipationStatusOption>;
-    }
-    return participationData.records.reduce<Record<number, ParticipationStatusOption>>((acc, record) => {
+    return allParticipationRecords.reduce<Record<number, ParticipationStatusOption>>((acc, record) => {
       acc[record.player.id] = record.status;
       return acc;
     }, {});
-  }, [participationData]);
+  }, [allParticipationRecords]);
 
   const yesParticipantIds = useMemo(() => {
-    if (!participationData) {
+    if (!currentWeekParticipation) {
       return [] as number[];
     }
-    return participationData.records
+    return currentWeekParticipation.records
       .filter((record) => record.status === "yes")
       .map((record) => record.player.id);
-  }, [participationData]);
+  }, [currentWeekParticipation]);
 
   const unavailablePlayers = useMemo(() => {
-    if (!participationData) {
+    if (!currentWeekParticipation) {
       return [] as string[];
     }
-    return participationData.records
+    return currentWeekParticipation.records
       .filter((record) => record.status === "no")
       .map((record) => record.player.name);
-  }, [participationData]);
+  }, [currentWeekParticipation]);
 
   async function loadDraws() {
     try {
@@ -97,13 +105,23 @@ export function DrawTab() {
   async function loadParticipation() {
     try {
       setParticipationLoading(true);
-      const response = await fetchParticipation({ limit: 200 });
-      setParticipationData(response);
+      const currentCycleKey = deriveCycleKey();
+      const response = await fetchParticipation({ limit: 200, cycleKey: currentCycleKey });
+      setCurrentWeekParticipation(response);
       setParticipationError(null);
     } catch (error) {
       setParticipationError((error as Error).message);
     } finally {
       setParticipationLoading(false);
+    }
+  }
+
+  async function loadAllParticipationRecords() {
+    try {
+      const response = await fetchParticipation({ limit: 200 });
+      setAllParticipationRecords(response.records);
+    } catch (error) {
+      // Silently fail for statuses
     }
   }
 
@@ -146,11 +164,11 @@ export function DrawTab() {
   }
 
   function handleApplyParticipation() {
-    if (!participationData) {
+    if (!currentWeekParticipation) {
       return;
     }
 
-    const yesIds = participationData.records
+    const yesIds = currentWeekParticipation.records
       .filter((record) => record.status === "yes")
       .map((record) => record.player.id);
 
@@ -164,11 +182,11 @@ export function DrawTab() {
 
   return (
     <>
-      {latestDraw && (
+      {currentWeekDraw && (
         <div className="mb-6 rounded-xl bg-white/15 p-4 text-white shadow-lg backdrop-blur">
           <div className="text-sm uppercase tracking-wide text-white/80">Bu Haftanın Kurası</div>
           <div className="mt-1 text-lg font-semibold">
-            {latestDraw.conductor.name} tarafından {new Date(latestDraw.createdAt).toLocaleString("tr-TR", {
+            {currentWeekDraw.conductor.name} tarafından {new Date(currentWeekDraw.createdAt).toLocaleString("tr-TR", {
               dateStyle: "medium",
               timeStyle: "short",
             })} tarihinde çekildi.
@@ -187,7 +205,7 @@ export function DrawTab() {
           <div>
             <div className="text-sm font-semibold uppercase tracking-wide text-white/80">Katılım Anketi</div>
             <div className="text-xs text-white/70">
-              Katılacak: {participationData?.aggregates.yes ?? 0} • Katılamayacak: {participationData?.aggregates.no ?? 0}
+              Katılacak: {currentWeekParticipation?.aggregates.yes ?? 0} • Katılamayacak: {currentWeekParticipation?.aggregates.no ?? 0}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -220,7 +238,7 @@ export function DrawTab() {
             Katılamayacaklar: {unavailablePlayers.join(", ")}
           </div>
         )}
-        {!participationError && participationData && participationData.records.length === 0 && (
+        {!participationError && currentWeekParticipation && currentWeekParticipation.records.length === 0 && (
           <div className="text-xs text-white/60">Henüz katılım yanıtı yok.</div>
         )}
       </div>
@@ -257,14 +275,15 @@ export function DrawTab() {
 
       <div ref={resultsRef}>
         <ResultsDisplay
-          lockedPlayers={latestDraw?.lockedPlayers ?? []}
+          lockedPlayers={currentWeekDraw?.lockedPlayers ?? []}
           primaryPlayers={winners}
           reservePlayers={reserves}
+          cycleKey={currentWeekDraw ? currentCycleKey : undefined}
         />
         {winners.length > 0 && (
           <ShareButtons
             winners={winners}
-            lockedPlayers={latestDraw?.lockedPlayers ?? []}
+            lockedPlayers={currentWeekDraw?.lockedPlayers ?? []}
             resultsRef={resultsRef}
           />
         )}

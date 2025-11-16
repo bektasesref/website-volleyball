@@ -9,9 +9,10 @@ interface ResultsDisplayProps {
   lockedPlayers: PlayerRef[];
   primaryPlayers: PlayerRef[];
   reservePlayers?: PlayerRef[];
+  cycleKey?: string;
 }
 
-export function ResultsDisplay({ lockedPlayers, primaryPlayers, reservePlayers = [] }: ResultsDisplayProps) {
+export function ResultsDisplay({ lockedPlayers, primaryPlayers, reservePlayers = [], cycleKey }: ResultsDisplayProps) {
   if (primaryPlayers.length === 0) {
     return null;
   }
@@ -23,7 +24,7 @@ export function ResultsDisplay({ lockedPlayers, primaryPlayers, reservePlayers =
       <CardHeader>
         <CardTitle className="text-center text-2xl flex items-center justify-center gap-2">
           <CheckCircle2 className="text-green-600" />
-          Seçilen 12 Oyuncu
+          {cycleKey ? "Bu Hafta için Seçilen 12 Oyuncu" : "Seçilen 12 Oyuncu"}
         </CardTitle>
       </CardHeader>
       <CardContent>
